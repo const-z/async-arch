@@ -1,0 +1,36 @@
+version: '3.7'
+
+services:
+
+  auth:
+    build:
+      context: ./services/auth/
+    entrypoint: ./run.sh
+    depends_on:
+      - auth_db
+      - kafka
+    ports:
+      - 9229:9229
+    volumes:
+      - ./services/auth:/app
+      - /app/node_modules
+    environment:
+      - KAFKAJS_NO_PARTITIONER_WARNING=1
+      - KAFKA_BROKERS
+      - AUTH_DB
+      - AUTH_DB_USER
+      - AUTH_DB_PASSWORD
+    networks:
+      - ates-network
+
+  auth_db:
+    image: postgres:14
+    environment:
+      POSTGRES_DB: ${AUTH_DB}
+      POSTGRES_USER: ${AUTH_DB_USER}
+      POSTGRES_PASSWORD: ${AUTH_DB_PASSWORD}
+    ports:
+      - 5432:5432
+    command: postgres -c log_statement=all -c shared_preload_libraries=pg_stat_statements -c pg_stat_statements.track=all
+    networks:
+      - ates-network

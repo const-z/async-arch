@@ -7,14 +7,28 @@
     {
       "address": "localhost",
       "localRoot": "${workspaceFolder}/services/auth",
-      "name": "Attach to Remote",
+      "name": "Attach to AUTH",
       "port": 9229,
       "remoteRoot": "/app",
       "request": "attach",
       "skipFiles": [
         "<node_internals>/**"
       ],
-      "type": "node"
+      "type": "node",
+      "restart": true
+    },
+    {
+      "address": "localhost",
+      "localRoot": "${workspaceFolder}/services/tasks",
+      "name": "Attach to TASKS",
+      "port": 9230,
+      "remoteRoot": "/app",
+      "request": "attach",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "type": "node",
+      "restart": true
     }
   ]
 }

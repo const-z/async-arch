@@ -2,37 +2,36 @@ version: '3.7'
 
 services:
 
-  auth:
+  tasks:
     build:
-      context: ./services/auth/
+      context: ./services/tasks/
     entrypoint: ./run.sh
     depends_on:
-      - auth_db
+      - tasks_db
       - kafka
     ports:
-      - 9229:9229
+      - 9230:9229
     volumes:
-      - ./services/auth:/app
+      - ./services/tasks:/app
       - /app/node_modules
     environment:
       - KAFKAJS_NO_PARTITIONER_WARNING=1
       - KAFKA_BROKERS
       - JWT_SECRET
-      - AUTH_SALT
-      - AUTH_DB
-      - AUTH_DB_USER
-      - AUTH_DB_PASSWORD
+      - TASKS_DB
+      - TASKS_DB_USER
+      - TASKS_DB_PASSWORD
     networks:
       - ates-network
 
-  auth_db:
+  tasks_db:
     image: postgres:14
     environment:
-      POSTGRES_DB: ${AUTH_DB}
-      POSTGRES_USER: ${AUTH_DB_USER}
-      POSTGRES_PASSWORD: ${AUTH_DB_PASSWORD}
+      POSTGRES_DB: ${TASKS_DB}
+      POSTGRES_USER: ${TASKS_DB_USER}
+      POSTGRES_PASSWORD: ${TASKS_DB_PASSWORD}
     ports:
-      - 5432:5432
+      - 5433:5432
     command: postgres -c log_statement=all -c shared_preload_libraries=pg_stat_statements -c pg_stat_statements.track=all
     networks:
       - ates-network

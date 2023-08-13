@@ -35,7 +35,9 @@ export class UserService {
       id,
     };
 
-    const user = await this.userRepo.upsert(userEntity);
+    await this.userRepo.create(userEntity);
+
+    const user = await this.userRepo.findOne({ id }, { populate: ['role'] });
 
     await this.eventProducer.emitAndWait({
       pattern: UserEventTypes.USER_CREATED,

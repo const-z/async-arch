@@ -1,21 +1,17 @@
-import { Entity, Property, PrimaryKey, ManyToOne } from '@mikro-orm/core';
+import { Entity, Property, PrimaryKey } from '@mikro-orm/core';
 
 import { UsersRepo } from '../repository/users.repo';
-import { RoleEntity } from './role.entity';
 
 @Entity({
   tableName: 'users',
   customRepository: () => UsersRepo,
 })
 export class UserEntity {
-  @PrimaryKey({ type: 'uuid', defaultRaw: 'uuid_generate_v4()' })
+  @PrimaryKey({ type: 'uuid' })
   id: string;
 
   @Property()
   login: string;
-
-  @Property({ hidden: true, lazy: true })
-  password: string;
 
   @Property()
   name: string;
@@ -23,8 +19,8 @@ export class UserEntity {
   @Property()
   email: string;
 
-  @ManyToOne(() => RoleEntity, { nullable: false, eager: true })
-  role: RoleEntity;
+  @Property({ type: 'json', nullable: false })
+  role: { id: number; name: string };
 
   @Property({ fieldName: 'created_at' })
   createdAt: Date = new Date();

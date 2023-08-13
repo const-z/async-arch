@@ -10,12 +10,7 @@ import {
   UseGuards,
   BadRequestException,
 } from '@nestjs/common';
-import {
-  ApiBadRequestResponse,
-  ApiInternalServerErrorResponse,
-  ApiResponse,
-  ApiTags,
-} from '@nestjs/swagger';
+import { ApiResponse, ApiSecurity, ApiTags } from '@nestjs/swagger';
 
 import { StatusDescription } from '../status.description';
 import { UserEntity } from '../db/entity/user.entity';
@@ -29,34 +24,28 @@ import { IUser } from './types/user';
 @Controller('users')
 @ApiTags('users')
 export class UserController {
-  constructor(private readonly appService: UserService) {}
+  constructor(private readonly userService: UserService) {}
 
   @Get()
   @ApiResponse({
     status: HttpStatus.OK,
     description: StatusDescription.OK,
   })
-  @ApiInternalServerErrorResponse({
-    description: StatusDescription.INTERNAL_SERVER_ERROR,
-  })
   async getUsers(): Promise<UserEntity[]> {
-    const result = await this.appService.getUsers();
+    const result = await this.userService.getUsers();
 
     return result;
   }
 
   @Post()
   @UseGuards(AuthGuard(['admin']))
+  @ApiSecurity('authorization', ['authorization'])
   @ApiResponse({
     status: HttpStatus.CREATED,
     description: StatusDescription.CREATED,
   })
-  @ApiBadRequestResponse({ description: StatusDescription.BAD_REQUEST })
-  @ApiInternalServerErrorResponse({
-    description: StatusDescription.INTERNAL_SERVER_ERROR,
-  })
   async createUser(@Body() body: CreateUserRequestDTO): Promise<void> {
-    await this.appService.createUser(body);
+    await this.userService.createUser(body);
   }
 
   @Patch(':userId')
@@ -64,10 +53,6 @@ export class UserController {
   @ApiResponse({
     status: HttpStatus.OK,
     description: StatusDescription.OK,
-  })
-  @ApiBadRequestResponse({ description: StatusDescription.BAD_REQUEST })
-  @ApiInternalServerErrorResponse({
-    description: StatusDescription.INTERNAL_SERVER_ERROR,
   })
   async updateUser(
     @Param('userId') userId: string,
@@ -78,7 +63,7 @@ export class UserController {
       throw new BadRequestException('Operation not permitted');
     }
 
-    await this.appService.updateUser({ id: userId, ...body });
+    await this.userService.updateUser({ id: userId, ...body });
   }
 
   @Delete(':userId')
@@ -86,10 +71,6 @@ export class UserController {
   @ApiResponse({
     status: HttpStatus.OK,
     description: StatusDescription.OK,
-  })
-  @ApiBadRequestResponse({ description: StatusDescription.BAD_REQUEST })
-  @ApiInternalServerErrorResponse({
-    description: StatusDescription.INTERNAL_SERVER_ERROR,
   })
   async deleteUser(
     @Param('userId') userId: string,
@@ -99,7 +80,7 @@ export class UserController {
       throw new BadRequestException('Operation not permitted');
     }
 
-    await this.appService.deleteUser(userId);
+    await this.userService.deleteUser(userId);
   }
 
   @Post(':userId/block')
@@ -107,10 +88,6 @@ export class UserController {
   @ApiResponse({
     status: HttpStatus.OK,
     description: StatusDescription.OK,
-  })
-  @ApiBadRequestResponse({ description: StatusDescription.BAD_REQUEST })
-  @ApiInternalServerErrorResponse({
-    description: StatusDescription.INTERNAL_SERVER_ERROR,
   })
   async blockUser(
     @Param('userId') userId: string,
@@ -120,7 +97,7 @@ export class UserController {
       throw new BadRequestException('Operation not permitted');
     }
 
-    await this.appService.blockUser(userId);
+    await this.userService.blockUser(userId);
   }
 
   @Post(':userId/unblock')
@@ -128,10 +105,6 @@ export class UserController {
   @ApiResponse({
     status: HttpStatus.OK,
     description: StatusDescription.OK,
-  })
-  @ApiBadRequestResponse({ description: StatusDescription.BAD_REQUEST })
-  @ApiInternalServerErrorResponse({
-    description: StatusDescription.INTERNAL_SERVER_ERROR,
   })
   async unblockUser(
     @Param('userId') userId: string,
@@ -141,6 +114,6 @@ export class UserController {
       throw new BadRequestException('Operation not permitted');
     }
 
-    await this.appService.unblockUser(userId);
+    await this.userService.unblockUser(userId);
   }
 }

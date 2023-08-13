@@ -1,5 +1,7 @@
+import { UserEventTypes } from '../user/types/events';
+
 export interface IEvent {
-  pattern: string;
+  pattern: UserEventTypes;
   data: unknown;
 }
 

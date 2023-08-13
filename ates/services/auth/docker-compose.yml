@@ -17,6 +17,8 @@ services:
     environment:
       - KAFKAJS_NO_PARTITIONER_WARNING=1
       - KAFKA_BROKERS
+      - JWT_SECRET
+      - AUTH_SALT
       - AUTH_DB
       - AUTH_DB_USER
       - AUTH_DB_PASSWORD

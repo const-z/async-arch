@@ -18,6 +18,10 @@ export class AppConfigService extends ConfigService {
     return this.get<string>('AUTH_SALT');
   }
 
+  get jwtSecret(): string {
+    return this.get<string>('JWT_SECRET');
+  }
+
   get database(): IDatabaseCredentials {
     const dbConfig = {
       name: this.get<string>(`${this.appName}_DB`),
@@ -35,11 +39,11 @@ export class AppConfigService extends ConfigService {
 
     const kafkaConfig: KafkaOptions['options'] = {
       consumer: {
-        allowAutoTopicCreation: true,
+        allowAutoTopicCreation: false,
         groupId: this.appName,
       },
       producer: {
-        allowAutoTopicCreation: true,
+        allowAutoTopicCreation: false,
       },
       client: {
         clientId: this.appName,

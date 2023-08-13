@@ -14,7 +14,7 @@ export class UserEntity {
   @Property()
   login: string;
 
-  @Property({ hidden: true })
+  @Property({ hidden: true, lazy: true })
   password: string;
 
   @Property()
@@ -23,12 +23,18 @@ export class UserEntity {
   @Property()
   email: string;
 
+  @ManyToOne(() => RoleEntity, { nullable: false })
+  role: RoleEntity;
+
   @Property({ fieldName: 'created_at' })
   createdAt: Date = new Date();
 
   @Property({ fieldName: 'updated_at', onUpdate: () => new Date() })
   updatedAt: Date = new Date();
 
-  @ManyToOne(() => RoleEntity, { nullable: false })
-  role: RoleEntity;
+  @Property({ fieldName: 'deleted_at', nullable: true })
+  deletedAt: Date | null;
+
+  @Property({ fieldName: 'blocked_at', nullable: true })
+  blockedAt: Date | null;
 }

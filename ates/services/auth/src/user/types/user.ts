@@ -1,4 +1,4 @@
-export interface NewUserData {
+export interface INewUserData {
   login: string;
   password: string;
   name: string;
@@ -6,11 +6,28 @@ export interface NewUserData {
   role: string;
 }
 
-export interface User {
+export interface IUpdateUserData {
+  id: string;
+  password?: string;
+  name?: string;
+  email?: string;
+  role?: string;
+}
+
+export interface IUser {
   id: string;
   login: string;
   password: string;
   name: string;
   email: string;
-  role: string;
+  role: {
+    id: number;
+    name: string;
+    createdAt: Date;
+    updatedAt: Date;
+  };
+  createdAt: Date;
+  updatedAt: Date;
+  blockedAt: Date;
+  deletedAt: Date;
 }

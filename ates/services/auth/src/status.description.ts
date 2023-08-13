@@ -6,4 +6,5 @@ export enum StatusDescription {
   UNAUTHORIZED = 'Authentication failed (this server authenticates with password, not token or session)',
   UNPROCESSABLE_ENTITY = 'The server understood the request and the syntax is correct, but could not fulfill the request',
   INTERNAL_SERVER_ERROR = 'An unexpected error occurred inside the server',
+  WRONG_LOGIN_OR_PASSWORD = 'Wrong login or password',
 }

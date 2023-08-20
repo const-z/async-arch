@@ -21,26 +21,25 @@ export class Migration20230801130628 extends Migration {
 
         CREATE TABLE users
         (
-          id          uuid            NOT NULL DEFAULT uuid_generate_v4() CONSTRAINT relations_incident_pkey PRIMARY KEY,
+          id          serial          NOT NULL CONSTRAINT users_pk PRIMARY KEY,
+          public_id   uuid            NOT NULL DEFAULT uuid_generate_v4(),
           role_id     int             NOT NULL CONSTRAINT role_id_fk REFERENCES roles,
           login       varchar         NOT NULL,
           password    varchar         NOT NULL,
           name        varchar         NOT NULL,
           email       varchar         NOT NULL,
-          is_blocked  boolean         NOT NULL DEFAULT FALSE,
-          blocked_at  timestamptz(0)  ,
           deleted_at  timestamptz(0)  ,
 
           created_at  timestamptz(0)  NOT NULL DEFAULT now(),
           updated_at  timestamptz(0)  NOT NULL DEFAULT now()
         );
 
+        CREATE UNIQUE INDEX users_public_id_uindex ON users (public_id);
         CREATE UNIQUE INDEX users_login_uindex ON users (login);
 
-        INSERT INTO roles(id, name) VALUES (1, 'admin'), (2, 'manager'), (3, 'popug');
-        
+        INSERT INTO roles(id, name) VALUES (1, 'system'), (2, 'admin'), (3, 'manager'), (4, 'popug');
         INSERT INTO users(login, password, name, email, role_id) 
-        VALUES ('admin', MD5('admin'||'${AUTH_SALT}'), 'admin', 'admin@example.local', 1);
+        VALUES ('system', MD5('system'||'${AUTH_SALT}'), 'system', 'system@example.local', 1);
       `,
     );
   }

@@ -6,6 +6,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { AppConfigService } from './config.service';
 import { UserModule } from './user/user.module';
 import { AppController } from './app.controller';
+import { TasksModule } from './tasks/tasks.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { AppController } from './app.controller';
       global: true,
     }),
     UserModule,
+    TasksModule,
   ],
   controllers: [AppController],
   providers: [AppConfigService],

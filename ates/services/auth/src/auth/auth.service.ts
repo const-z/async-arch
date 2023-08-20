@@ -5,7 +5,7 @@ import { AppConfigService } from '../config.service';
 import { UsersRepo } from '../db/repository/users.repo';
 import { getPasswordHash } from '../common/password.hash';
 import { IAuthData, IToken } from './types/user';
-import { InvalidCredentialsException } from './exceptions';
+import { InvalidCredentialsException } from './auth.exceptions';
 
 @Injectable()
 export class AuthService {
@@ -20,7 +20,7 @@ export class AuthService {
 
     const user = await this.userRepo.findOne(
       { login },
-      { populate: ['role', 'password'] },
+      { populate: ['password'] },
     );
 
     if (!user) {
@@ -34,7 +34,7 @@ export class AuthService {
     }
 
     const token = await this.jwtService.signAsync(
-      { id: user.id, role: user.role.name },
+      { publicId: user.publicId, role: user.role.name },
       { secret: this.config.jwtSecret },
     );
 

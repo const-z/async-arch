@@ -4,6 +4,7 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { EventBusTransport } from './eventbus/eventbus.module';
 import { AppConfigService } from './config.service';
+import { AppExceptionFilter } from './common/app.exception.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -12,12 +13,14 @@ async function bootstrap() {
   app.connectMicroservice({ strategy: new EventBusTransport(appConfig.kafka) });
 
   app.setGlobalPrefix('api/v1');
+  app.useGlobalFilters(new AppExceptionFilter());
 
   const config = new DocumentBuilder()
     .setTitle('Tasks Service')
     .setVersion('1.0')
     .addTag('tasks')
     .addServer('/tasks')
+    .addApiKey({ type: 'apiKey', name: 'authorization' }, 'authorization')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);

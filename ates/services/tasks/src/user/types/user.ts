@@ -1,17 +1,10 @@
-
 export interface IUser {
-  id: string;
+  publicId: string;
   login: string;
   name: string;
   email: string;
-  role: {
-    id: number;
-    name: string;
-    createdAt: Date;
-    updatedAt: Date;
-  };
+  role: string;
   createdAt: Date;
   updatedAt: Date;
-  blockedAt: Date;
   deletedAt: Date;
 }

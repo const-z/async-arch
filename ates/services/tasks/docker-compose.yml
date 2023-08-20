@@ -6,6 +6,7 @@ services:
     build:
       context: ./services/tasks/
     entrypoint: ./run.sh
+    restart: unless-stopped
     depends_on:
       - tasks_db
       - kafka

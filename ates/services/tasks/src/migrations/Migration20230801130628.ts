@@ -8,21 +8,45 @@ export class Migration20230801130628 extends Migration {
 
         CREATE TABLE users
         (
-          id          uuid            NOT NULL PRIMARY KEY,
-          role        json            NOT NULL,
+          id          serial          NOT NULL PRIMARY KEY,
+          public_id   uuid            NOT NULL,
+          role        varchar         NOT NULL,
           login       varchar         NOT NULL,
           name        varchar         NOT NULL,
           email       varchar         NOT NULL,
-          is_blocked  boolean         NOT NULL DEFAULT FALSE,
-          blocked_at  timestamptz(0)  ,
+          
           deleted_at  timestamptz(0)  ,
-
           created_at  timestamptz(0)  NOT NULL DEFAULT now(),
           updated_at  timestamptz(0)  NOT NULL DEFAULT now()
         );
 
+        CREATE UNIQUE INDEX users_public_id_uindex ON users (public_id);
         CREATE UNIQUE INDEX users_login_uindex ON users (login);
+
+
+        CREATE TABLE tasks
+        (
+          id            serial          NOT NULL PRIMARY KEY,
+          public_id     uuid            NOT NULL,
+
+
+          title         varchar         NOT NULL,
+          description   varchar         ,
+          cost          real            NOT NULL,
+          reward        real            NOT NULL,
+          creator       int             NOT NULL CONSTRAINT creator_fk REFERENCES users,
+          executor      int             NOT NULL CONSTRAINT executor_fk REFERENCES users,
+
+          completed_at  timestamptz(0)  ,
+          created_at    timestamptz(0)  NOT NULL DEFAULT now(),
+          updated_at    timestamptz(0)  NOT NULL DEFAULT now()
+        );
       `,
     );
+  }
+
+  async down(): Promise<void> {
+    this.addSql('DROP TABLE IF EXISTS tasks CASCADE');
+    this.addSql('DROP TABLE IF EXISTS users CASCADE');
   }
 }

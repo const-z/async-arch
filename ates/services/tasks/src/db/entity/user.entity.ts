@@ -7,8 +7,11 @@ import { UsersRepo } from '../repository/users.repo';
   customRepository: () => UsersRepo,
 })
 export class UserEntity {
-  @PrimaryKey({ type: 'uuid' })
-  id: string;
+  @PrimaryKey({ autoincrement: true })
+  id: number;
+
+  @Property({ fieldName: 'public_id', type: 'uuid', unique: true })
+  publicId: string;
 
   @Property()
   login: string;
@@ -19,8 +22,8 @@ export class UserEntity {
   @Property()
   email: string;
 
-  @Property({ type: 'json', nullable: false })
-  role: { id: number; name: string };
+  @Property()
+  role: string;
 
   @Property({ fieldName: 'created_at' })
   createdAt: Date = new Date();
@@ -30,7 +33,4 @@ export class UserEntity {
 
   @Property({ fieldName: 'deleted_at', nullable: true })
   deletedAt: Date | null;
-
-  @Property({ fieldName: 'blocked_at', nullable: true })
-  blockedAt: Date | null;
 }

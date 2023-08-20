@@ -1,6 +1,9 @@
-import { IsNumberString } from 'class-validator';
+import { Transform } from 'class-transformer';
+import { IsDefined, IsNumber, IsNumberString } from 'class-validator';
 
 export class IdPathParams {
-  @IsNumberString()
+  @IsDefined()
+  @IsNumber()
+  @Transform(({ value }) => Number(value))
   id: number;
 }

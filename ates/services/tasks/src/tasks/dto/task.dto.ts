@@ -1,5 +1,5 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsDateString, IsNumber, IsString } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsDateString, IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class TaskResponseDTO {
   @ApiProperty()
@@ -10,9 +10,10 @@ export class TaskResponseDTO {
   @IsString()
   title: string;
 
-  @ApiProperty()
+  @ApiPropertyOptional()
+  @IsOptional()
   @IsString()
-  description: string;
+  description?: string;
 
   @ApiProperty()
   @IsNumber()
@@ -29,6 +30,11 @@ export class TaskResponseDTO {
   @ApiProperty()
   @IsString()
   executor: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsDateString()
+  completedAt?: Date;
 
   @ApiProperty()
   @IsDateString()

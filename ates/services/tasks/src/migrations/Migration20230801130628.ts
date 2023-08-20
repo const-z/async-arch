@@ -34,8 +34,8 @@ export class Migration20230801130628 extends Migration {
           description   varchar         ,
           cost          real            NOT NULL,
           reward        real            NOT NULL,
-          creator       int             NOT NULL CONSTRAINT creator_fk REFERENCES users,
-          executor      int             NOT NULL CONSTRAINT executor_fk REFERENCES users,
+          creator_id    int             NOT NULL CONSTRAINT creator_fk REFERENCES users,
+          executor_id   int             NOT NULL CONSTRAINT executor_fk REFERENCES users,
 
           completed_at  timestamptz(0)  ,
           created_at    timestamptz(0)  NOT NULL DEFAULT now(),

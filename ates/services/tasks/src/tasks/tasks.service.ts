@@ -5,7 +5,7 @@ import { UsersRepo } from '../db/repository/users.repo';
 import { TasksRepo } from '../db/repository/tasks.repo';
 import { IEventProducer } from '../eventbus/eventbus.types';
 import { EVENT_PRODUCER } from '../constants';
-import { ICloseTaskData, INewTaskData, ITask } from './types/task';
+import { ICompleteTaskData, INewTaskData, ITask } from './types/task';
 import {
   TaskStreamEventFactory as TaskSE,
   TaskStreamEventTypes,
@@ -32,45 +32,50 @@ export class TasksService {
     return tasks;
   }
 
+  async getMyTasks(publicId: string): Promise<ITask[]> {
+    const tasks = await this.tasksRepo.getTasksViewForUser(publicId);
+
+    return tasks;
+  }
+
   async createTask(data: INewTaskData): Promise<void> {
     const executor = await this.getRandomExecutor();
 
     const task = {
       ...data,
-      cost: Number((Math.random() * 10 + 9).toFixed(2)),
-      reward: Number((Math.random() * 20 + 19).toFixed(2)),
+      cost: Number((Math.random() * 10 + 10).toFixed(2)),
+      reward: Number((Math.random() * 20 + 20).toFixed(2)),
       executor,
     };
 
     const createdTask = await this.tasksRepo.createTask(task);
 
-    console.log(createdTask);
+    await this.eventProducer.emitAndWait(
+      TaskSE.create(TaskStreamEventTypes.TASK_CREATED).toEvent(createdTask),
+    );
 
-    // const entity = this.tasksRepo.create(data);
-
-    // this.tasksRepo.assign(entity, {
-    //   cost: Number((Math.random() * 10 + 9).toFixed(2)),
-    //   reward: Number((Math.random() * 20 + 19).toFixed(2)),
-    //   executor,
-    // });
-
-    // await this.tasksRepo.getEntityManager().persistAndFlush(entity);
-
-    // await this.eventProducer.emitAndWait(
-    //   TaskSE.create(TaskStreamEventTypes.TASK_CREATED).toEvent(createdTask),
-    // );
-    // await this.eventProducer.emitAndWait(
-    //   TaskBE.create(TaskBusinessEventTypes.TASK_ASSIGNED).toEvent(createdTask),
-    // );
+    await this.eventProducer.emitAndWait(
+      TaskBE.create(TaskBusinessEventTypes.TASK_ASSIGNED).toEvent(createdTask),
+    );
   }
 
-  async closeTask(data: ICloseTaskData) {
-    // await this.eventProducer.emitAndWait(
-    //   TaskSE.create(TaskStreamEventTypes.TASK_UPDATED).toEvent(updatedTask),
-    // );
-    // await this.eventProducer.emitAndWait(
-    //   TaskBE.create(TaskBusinessEventTypes.TASK_DONE).toEvent(updatedTask),
-    // );
+  async completeTask(data: ICompleteTaskData) {
+    const task = await this.tasksRepo.findOne({ id: data.taskId });
+
+    if (task.executor.publicId !== data.userPublicId) {
+      throw new Error('Only executor can complete task');
+    }
+
+    this.tasksRepo.assign(task, { completedAt: new Date() });
+
+    const updatedTask = await this.tasksRepo.updateTask(task);
+
+    await this.eventProducer.emitAndWait(
+      TaskSE.create(TaskStreamEventTypes.TASK_UPDATED).toEvent(updatedTask),
+    );
+    await this.eventProducer.emitAndWait(
+      TaskBE.create(TaskBusinessEventTypes.TASK_COMPLETED).toEvent(updatedTask),
+    );
   }
 
   async shuffle() {

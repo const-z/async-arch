@@ -16,7 +16,7 @@ export interface ITaskBusinessEventData {
 
 export enum TaskBusinessEventTypes {
   TASK_ASSIGNED = 'TaskAssigned',
-  TASK_DONE = 'TaskDone',
+  TASK_COMPLETED = 'TaskCompleted',
 }
 
 export enum TaskBusinessEventTopics {
@@ -58,8 +58,8 @@ export class TaskBusinessEventFactory {
   static create(type: TaskBusinessEventTypes): CommonTaskBusinessEvent {
     if (type === TaskBusinessEventTypes.TASK_ASSIGNED) {
       return new TaskAssignedEvent();
-    } else if (type === TaskBusinessEventTypes.TASK_DONE) {
-      return new TaskDoneEvent();
+    } else if (type === TaskBusinessEventTypes.TASK_COMPLETED) {
+      return new TaskCompletedEvent();
     }
   }
 }
@@ -70,8 +70,8 @@ export class TaskAssignedEvent extends CommonTaskBusinessEvent {
   }
 }
 
-export class TaskDoneEvent extends CommonTaskBusinessEvent {
+export class TaskCompletedEvent extends CommonTaskBusinessEvent {
   constructor() {
-    super(TaskDoneEvent.name);
+    super(TaskCompletedEvent.name);
   }
 }

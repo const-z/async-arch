@@ -32,12 +32,12 @@ export class TaskEntity {
   @ManyToOne(() => UserEntity, { nullable: false, eager: true })
   executor: UserEntity;
 
+  @Property({ fieldName: 'completed_at', nullable: true })
+  completedAt: Date;
+
   @Property({ fieldName: 'created_at' })
   createdAt: Date = new Date();
 
   @Property({ fieldName: 'updated_at', onUpdate: () => new Date() })
   updatedAt: Date = new Date();
-
-  @Property({ fieldName: 'completed_at', nullable: true })
-  completedAt: Date;
 }

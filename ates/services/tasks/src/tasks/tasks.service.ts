@@ -1,10 +1,13 @@
 import { Inject, Injectable } from '@nestjs/common';
 
-import { AppConfigService } from '../config.service';
+import { TaskCreatedSchemaV1 } from 'schema-registry';
+
 import { UsersRepo } from '../db/repository/users.repo';
 import { TasksRepo } from '../db/repository/tasks.repo';
 import { IEventProducer } from '../eventbus/eventbus.types';
 import { EVENT_PRODUCER } from '../constants';
+import { UserRoles } from '../common/users.roles';
+import { UserEntity } from '../db/entity/user.entity';
 import { ICompleteTaskData, INewTaskData, ITask } from './types/task';
 import {
   TaskStreamEventFactory as TaskSE,
@@ -14,8 +17,7 @@ import {
   TaskBusinessEventFactory as TaskBE,
   TaskBusinessEventTypes,
 } from './events/task.b-events';
-import { UserRoles } from 'src/common/users.roles';
-import { UserEntity } from 'src/db/entity/user.entity';
+import { EventDataValidationException } from './tasks.exceptions';
 
 @Injectable()
 export class TasksService {
@@ -50,9 +52,19 @@ export class TasksService {
 
     const createdTask = await this.tasksRepo.createTask(task);
 
-    await this.eventProducer.emitAndWait(
-      TaskSE.create(TaskStreamEventTypes.TASK_CREATED).toEvent(createdTask),
+    const taskCreatedEventData = TaskSE.create(
+      TaskStreamEventTypes.TASK_CREATED,
+    ).toEvent(createdTask);
+
+    const vresult = new TaskCreatedSchemaV1().validate(
+      taskCreatedEventData.data,
     );
+
+    if (!vresult) {
+      throw new EventDataValidationException();
+    }
+
+    await this.eventProducer.emitAndWait(taskCreatedEventData);
 
     await this.eventProducer.emitAndWait(
       TaskBE.create(TaskBusinessEventTypes.TASK_ASSIGNED).toEvent(createdTask),

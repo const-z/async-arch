@@ -6,6 +6,7 @@ export abstract class CommonEventSchema {
 
   public validate(data: unknown) {
     const type = TypeCompiler.Compile(this.schema);
+    
     return type.Check(data);
   }
 }

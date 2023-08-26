@@ -1,5 +1,11 @@
 import { AppConfigService } from '../config.service';
 
+export enum AppExceptionCode {
+  UserAlreadyExistsException = '1001',
+  InvalidCredentialsException = '2001',
+  EventDataValidationException = '3001',
+}
+
 export class AppException extends Error {
   readonly errorCode: string;
   readonly errorName: string;

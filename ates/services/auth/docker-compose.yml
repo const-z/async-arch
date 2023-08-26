@@ -14,6 +14,7 @@ services:
       - 9229:9229
     volumes:
       - ./services/auth:/app
+      - ./services/schema-registry:/schema-registry
       - /app/node_modules
     environment:
       - KAFKAJS_NO_PARTITIONER_WARNING=1

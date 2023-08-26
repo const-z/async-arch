@@ -1,0 +1,1 @@
+{"type":"object","properties":{"eventName":{"type":"string"},"data":{"type":"object","properties":{"publicId":{"type":"string"},"deletedAt":{"type":"Date"}},"required":["publicId","deletedAt"]}},"required":["eventName","data"]}

@@ -1,14 +1,17 @@
-import { Type, Static, TSchema } from '@sinclair/typebox';
+import { Type } from '@sinclair/typebox';
 
-import { eventMetaV2 } from '../../common/event.meta.v2';
+import { Nullable } from '../../common/nullable';
 
-import { CommonEventSchema } from '../../common/common.event.schema';
+export enum VersionV2 {
+  v2 = '2',
+}
 
-const Nullable = <T extends TSchema>(schema: T) =>
-  Type.Union([schema, Type.Null()]);
-
-export const TaskCreatedEventV2 = Type.Object({
-  ...eventMetaV2,
+export const TaskCreatedEventV2Schema = Type.Object({
+  eventId: Type.String(),
+  eventVersion: Type.Enum(VersionV2),
+  eventTime: Type.Date(),
+  eventName: Type.String(),
+  producer: Type.String(),
   data: Type.Object({
     publicId: Type.String(),
     jiraId: Type.String(),
@@ -24,8 +27,4 @@ export const TaskCreatedEventV2 = Type.Object({
   }),
 });
 
-export type TaskCreatedEventV2Type = Static<typeof TaskCreatedEventV2>;
-
-export class TaskCreatedSchemaV2 extends CommonEventSchema {
-  schema = TaskCreatedEventV2;
-}
+export const Schema = JSON.stringify(TaskCreatedEventV2Schema);

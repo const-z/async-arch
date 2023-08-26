@@ -1,10 +1,8 @@
-import { Type, Static, TSchema } from '@sinclair/typebox';
-import { CommonEventSchema } from '../../common/common.event.schema';
+import { Type } from '@sinclair/typebox';
 
-const Nullable = <T extends TSchema>(schema: T) =>
-  Type.Union([schema, Type.Null()]);
+import { Nullable } from '../../common/nullable';
 
-export const TaskCreatedEventV1 = Type.Object({
+export const TaskCreatedEventV1Schema = Type.Object({
   eventName: Type.String(),
   data: Type.Object({
     publicId: Type.String(),
@@ -20,8 +18,4 @@ export const TaskCreatedEventV1 = Type.Object({
   }),
 });
 
-export type TaskCreatedEventV1Type = Static<typeof TaskCreatedEventV1>;
-
-export class TaskCreatedSchemaV1 extends CommonEventSchema {
-  protected schema = TaskCreatedEventV1;
-}
+export const Schema = JSON.stringify(TaskCreatedEventV1Schema);

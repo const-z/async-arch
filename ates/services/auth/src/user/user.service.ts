@@ -6,12 +6,7 @@ import { RolesRepo } from '../db/repository/roles.repo';
 import { IEventProducer } from '../eventbus/eventbus.types';
 import { EVENT_PRODUCER } from '../constants';
 import { getPasswordHash } from '../common/password.hash';
-import {
-  IDeleteUserData,
-  INewUserData,
-  IUpdateUserData,
-  IUser,
-} from './types/user';
+import { INewUserData, IUpdateUserData, IUser } from './types/user';
 import {
   UserStreamEventFactory as UserSE,
   UserStreamEventTypes,
@@ -41,9 +36,10 @@ export class UserService {
     const password = getPasswordHash(data.password, this.config.passwordSalt);
     const newUser = await this.userRepo.createUser({ ...data, password });
 
-    await this.eventProducer.emitAndWait(
-      UserSE.create(UserStreamEventTypes.USER_CREATED).toEvent(newUser),
+    const event = UserSE.create(UserStreamEventTypes.USER_CREATED).toEvent(
+      newUser,
     );
+    await this.eventProducer.emitAndWait(event);
   }
 
   async updateUser(data: IUpdateUserData): Promise<void> {

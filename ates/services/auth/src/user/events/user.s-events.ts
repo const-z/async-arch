@@ -1,5 +1,31 @@
+import Ajv from 'ajv';
+import addFormats from 'ajv-formats';
+
+import * as UserCreatedV1 from 'schema-registry/schemas/UserCreated.v1.json';
+import * as UserDeletedV1 from 'schema-registry/schemas/UserDeleted.v1.json';
+import * as UserUpdatedV1 from 'schema-registry/schemas/UserUpdated.v1.json';
+
 import { IEvent } from '../../eventbus/eventbus.types';
 import { IUser } from '../types/user';
+
+const ajv = addFormats(new Ajv({}), [
+  'date-time',
+  'time',
+  'date',
+  'email',
+  'hostname',
+  'ipv4',
+  'ipv6',
+  'uri',
+  'uri-reference',
+  'uuid',
+  'uri-template',
+  'json-pointer',
+  'relative-json-pointer',
+  'regex',
+]);
+
+const validatorUserCreatedV1 = ajv.compile(UserCreatedV1);
 
 export interface IUserStreamEventData {
   publicId: string;
@@ -25,7 +51,10 @@ export enum UserStreamEventTopics {
 }
 
 abstract class CommonUserStreamEvent {
-  constructor(private readonly eventName: string) {}
+  constructor(
+    private readonly eventName: string,
+    private readonly validateFn: any, // (data: unknown) => boolean,
+  ) {}
 
   private convertData(data: IUser): IUserStreamEventData {
     const eventData: IUserStreamEventData = {
@@ -43,13 +72,28 @@ abstract class CommonUserStreamEvent {
   }
 
   toEvent(data: IUser): IEvent {
+    const eventData = {
+      eventName: this.eventName,
+      data: this.convertData(data),
+    };
+
+    const v = ajv.compile(this.validateFn);
+
+    const r = v(data);
+    console.log(r);
+
     return {
       topic: UserStreamEventTopics.UsersStream,
-      data: {
-        eventName: this.eventName,
-        data: this.convertData(data),
-      },
+      data: eventData,
     };
+  }
+
+  private validate(data) {
+    const valid = this.validateFn(data);
+
+    if (!valid) {
+      throw new Error();
+    }
   }
 }
 
@@ -69,19 +113,19 @@ export class UserStreamEventFactory {
 
 class UserCreatedEvent extends CommonUserStreamEvent {
   constructor() {
-    super(UserCreatedEvent.name);
+    super(UserCreatedEvent.name, UserCreatedV1);
   }
 }
 
 class UserUpdatedEvent extends CommonUserStreamEvent {
   constructor() {
-    super(UserUpdatedEvent.name);
+    super(UserUpdatedEvent.name, ajv.compile(UserUpdatedV1));
   }
 }
 
 class UserDeletedEvent extends CommonUserStreamEvent {
   constructor() {
-    super(UserDeletedEvent.name);
+    super(UserDeletedEvent.name, ajv.compile(UserDeletedV1));
   }
 
   toEvent(data: IUser): IEvent {

@@ -1,5 +1,15 @@
+import {
+  TaskCreatedEventValidatorV1,
+  TaskUpdatedEventValidatorV1,
+} from 'schema-registry';
+
 import { IEvent } from '../../eventbus/eventbus.types';
 import { ITask } from '../types/task';
+import { EventDataValidationException } from '../tasks.exceptions';
+
+interface EventDataValidator {
+  validate(data: unknown): boolean;
+}
 
 export interface ITaskStreamEventData {
   publicId: string;
@@ -17,7 +27,6 @@ export interface ITaskStreamEventData {
 export enum TaskStreamEventTypes {
   TASK_CREATED = 'TaskCreated',
   TASK_UPDATED = 'TaskUpdated',
-  TASK_DELETED = 'TaskDeleted',
 }
 
 export enum TaskStreamEventTopics {
@@ -25,7 +34,10 @@ export enum TaskStreamEventTopics {
 }
 
 abstract class CommonTaskStreamEvent {
-  constructor(private readonly eventName: string) {}
+  constructor(
+    private readonly eventName: string,
+    private readonly validator: EventDataValidator,
+  ) {}
 
   private convertData(data: ITask): ITaskStreamEventData {
     const eventData: ITaskStreamEventData = {
@@ -45,12 +57,20 @@ abstract class CommonTaskStreamEvent {
   }
 
   toEvent(data: ITask): IEvent {
+    const eventData = {
+      eventName: this.eventName,
+      data: this.convertData(data),
+    };
+
+    const isValid = this.validator.validate(eventData);
+
+    if (!isValid) {
+      throw new EventDataValidationException();
+    }
+
     return {
       topic: TaskStreamEventTopics.TASKS_STREAM,
-      data: {
-        eventName: this.eventName,
-        data: this.convertData(data),
-      },
+      data: eventData,
     };
   }
 }
@@ -63,26 +83,17 @@ export class TaskStreamEventFactory {
     if (type === TaskStreamEventTypes.TASK_UPDATED) {
       return new TaskUpdatedEvent();
     }
-    if (type === TaskStreamEventTypes.TASK_DELETED) {
-      return new TaskDeletedEvent();
-    }
   }
 }
 
 class TaskCreatedEvent extends CommonTaskStreamEvent {
   constructor() {
-    super(TaskCreatedEvent.name);
+    super(TaskCreatedEvent.name, new TaskCreatedEventValidatorV1());
   }
 }
 
 class TaskUpdatedEvent extends CommonTaskStreamEvent {
   constructor() {
-    super(TaskUpdatedEvent.name);
-  }
-}
-
-class TaskDeletedEvent extends CommonTaskStreamEvent {
-  constructor() {
-    super(TaskDeletedEvent.name);
+    super(TaskUpdatedEvent.name, new TaskUpdatedEventValidatorV1());
   }
 }

@@ -1,7 +1,7 @@
 import { TSchema } from '@sinclair/typebox';
 import { TypeCompiler } from '@sinclair/typebox/compiler';
 
-export abstract class CommonEventSchema {
+export abstract class EventValidator {
   protected schema: TSchema;
 
   public validate(data: unknown) {

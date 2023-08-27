@@ -1,5 +1,16 @@
+import {
+  TaskAssignedEventValidatorV1,
+  TaskCompletedEventSchemaV1,
+  TaskCompletedEventValidatorV1,
+} from 'schema-registry';
+
 import { IEvent } from '../../eventbus/eventbus.types';
 import { ITask } from '../types/task';
+import { EventDataValidationException } from '../tasks.exceptions';
+
+interface EventDataValidator {
+  validate(data: unknown): boolean;
+}
 
 export interface ITaskBusinessEventData {
   publicId: string;
@@ -24,7 +35,10 @@ export enum TaskBusinessEventTopics {
 }
 
 abstract class CommonTaskBusinessEvent {
-  constructor(private readonly eventName: string) {}
+  constructor(
+    private readonly eventName: string,
+    private readonly validator: EventDataValidator,
+  ) {}
 
   private convertData(data: ITask): ITaskBusinessEventData {
     const eventData: ITaskBusinessEventData = {
@@ -44,12 +58,20 @@ abstract class CommonTaskBusinessEvent {
   }
 
   toEvent(data: ITask): IEvent {
+    const eventData = {
+      eventName: this.eventName,
+      data: this.convertData(data),
+    };
+
+    const isValid = this.validator.validate(eventData);
+
+    if (!isValid) {
+      throw new EventDataValidationException();
+    }
+
     return {
       topic: TaskBusinessEventTopics.TASKS_TOPIC,
-      data: {
-        eventName: this.eventName,
-        data: this.convertData(data),
-      },
+      data: eventData,
     };
   }
 }
@@ -66,12 +88,12 @@ export class TaskBusinessEventFactory {
 
 export class TaskAssignedEvent extends CommonTaskBusinessEvent {
   constructor() {
-    super(TaskAssignedEvent.name);
+    super(TaskAssignedEvent.name, new TaskAssignedEventValidatorV1());
   }
 }
 
 export class TaskCompletedEvent extends CommonTaskBusinessEvent {
   constructor() {
-    super(TaskCompletedEvent.name);
+    super(TaskCompletedEvent.name, new TaskCompletedEventValidatorV1());
   }
 }

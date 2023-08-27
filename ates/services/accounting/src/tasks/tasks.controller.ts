@@ -6,6 +6,17 @@ import {
   Payload,
 } from '@nestjs/microservices';
 
+import {
+  TaskAssignedEventValidatorV1,
+  TaskCompletedEventValidatorV1,
+  TaskCreatedEventValidatorV1,
+  TaskUpdatedEventValidatorV1,
+} from 'schema-registry';
+
+import {
+  InvalidEventException,
+  UnknownEventException,
+} from '../common/event.exception';
 import { IEventData } from '../eventbus/eventbus.types';
 import { TasksService } from './tasks.service';
 import {
@@ -14,7 +25,6 @@ import {
   TasksEventTopics,
 } from './types/events';
 import { ITask } from './types/task';
-import { UnknownEventException } from './tasks.exceptions';
 
 @Controller()
 export class TasksController {
@@ -27,9 +37,11 @@ export class TasksController {
   ) {
     if (data.eventName === TaskStreamEventTypes.TASK_CREATED) {
       Logger.log(`Add new task: ${JSON.stringify(data.data)}`);
+      this.validate(data, new TaskCreatedEventValidatorV1());
       await this.tasksService.upsertTask(data.data);
     } else if (data.eventName === TaskStreamEventTypes.TASK_UPDATED) {
       Logger.log(`Update task: ${JSON.stringify(data.data)}`);
+      this.validate(data, new TaskUpdatedEventValidatorV1());
       await this.tasksService.upsertTask(data.data);
     } else {
       throw new UnknownEventException(data.eventName);
@@ -51,8 +63,10 @@ export class TasksController {
     @Ctx() context: KafkaContext,
   ) {
     if (data.eventName === TaskBusinessEventTypes.TASK_ASSIGNED) {
+      this.validate(data, new TaskAssignedEventValidatorV1());
       await this.tasksService.writeOff(data.data);
     } else if (data.eventName === TaskBusinessEventTypes.TASK_COMPLETED) {
+      this.validate(data, new TaskCompletedEventValidatorV1());
       await this.tasksService.enroll(data.data);
     } else {
       throw new UnknownEventException(data.eventName);
@@ -66,5 +80,16 @@ export class TasksController {
       .commitOffsets([
         { topic, partition, offset: (Number(offset) + 1).toString() },
       ]);
+  }
+
+  private validate(
+    data,
+    validator: { validate: (data) => boolean; errors: (data) => any[] },
+  ) {
+    if (!validator.validate(data)) {
+      const errors = validator.errors(data);
+
+      throw new InvalidEventException(JSON.stringify(errors));
+    }
   }
 }

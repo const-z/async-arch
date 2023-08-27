@@ -17,9 +17,11 @@ export const UserUpdatedEventV1Schema = Type.Object({
         popug: Type.String(),
       }),
     ),
-    deletedAt: Type.Optional(Type.Optional(Nullable(Type.Date()))),
-    createdAt: Type.Date(),
-    updatedAt: Type.Date(),
+    deletedAt: Type.Optional(
+      Type.Optional(Nullable(Type.String())),
+    ),
+    createdAt: Type.String(),
+    updatedAt: Type.String(),
   }),
 });
 

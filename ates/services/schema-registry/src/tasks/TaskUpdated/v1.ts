@@ -13,9 +13,9 @@ export const TaskUpdatedEventSchemaV1 = Type.Object({
     reward: Type.Number(),
     creator: Type.String(),
     executor: Type.String(),
-    createdAt: Type.Date(),
-    updatedAt: Type.Date(),
-    completedAt: Type.Optional(Nullable(Type.Date())),
+    createdAt: Type.String(),
+    updatedAt: Type.String(),
+    completedAt: Type.Optional(Nullable(Type.String())),
   }),
 });
 

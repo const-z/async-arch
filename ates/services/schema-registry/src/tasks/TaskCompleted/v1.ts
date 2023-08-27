@@ -13,9 +13,9 @@ export const TaskCompletedEventSchemaV1 = Type.Object({
     reward: Type.Number(),
     creator: Type.String(),
     executor: Type.String(),
-    createdAt: Type.Date(),
-    updatedAt: Type.Date(),
-    completedAt: Type.Date(),
+    createdAt: Type.String(),
+    updatedAt: Type.String(),
+    completedAt: Type.String(),
   }),
 });
 

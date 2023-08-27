@@ -8,7 +8,7 @@ export const UserDeletedEventV1Schema = Type.Object(
     data: Type.Object(
       {
         publicId: Type.String(),
-        deletedAt: Type.Date(),
+        deletedAt: Type.String(),
       },
       { additionalProperties: false },
     ),

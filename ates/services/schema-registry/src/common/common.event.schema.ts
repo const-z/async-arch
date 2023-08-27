@@ -10,4 +10,11 @@ export abstract class EventValidator {
 
     return result;
   }
+
+  public errors(data: unknown) {
+    const type = TypeCompiler.Compile(this.schema);
+    const result = [...type.Errors(data)];
+
+    return result;
+  }
 }

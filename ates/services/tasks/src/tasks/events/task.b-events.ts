@@ -3,9 +3,9 @@ import {
   TaskCompletedEventValidatorV1,
 } from 'schema-registry';
 
+import { EventDataValidationException } from '../../common/event.exception';
 import { IEvent } from '../../eventbus/eventbus.types';
 import { ITask } from '../types/task';
-import { EventDataValidationException } from '../tasks.exceptions';
 
 interface EventDataValidator {
   validate(data: unknown): boolean;

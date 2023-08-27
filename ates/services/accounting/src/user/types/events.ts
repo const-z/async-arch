@@ -1,4 +1,4 @@
-export enum UserStreamEventTopics {
+export enum UsersEventTopics {
   UsersStream = 'users.stream',
 }
 

@@ -1,11 +1,18 @@
 import { Type } from '@sinclair/typebox';
 
-import { eventMetaV2 } from '../../common/event.meta.v2';
 import { EventValidator } from '../../common/common.event.schema';
 import { Nullable } from '../../common/nullable.schema';
 
+export enum VersionV2 {
+  v1 = '2',
+}
+
 export const TaskCreatedEventSchemaV2 = Type.Object({
-  ...eventMetaV2,
+  eventId: Type.String(),
+  eventVersion: Type.Enum(VersionV2),
+  eventTime: Type.Date(),
+  eventName: Type.String(),
+  producer: Type.String(),
   data: Type.Object({
     publicId: Type.String(),
     jiraId: Type.String(),
@@ -15,9 +22,9 @@ export const TaskCreatedEventSchemaV2 = Type.Object({
     reward: Type.Number(),
     creator: Type.String(),
     executor: Type.String(),
-    createdAt: Type.Date(),
-    updatedAt: Type.Date(),
-    completedAt: Type.Optional(Nullable(Type.Date())),
+    createdAt: Type.String(),
+    updatedAt: Type.String(),
+    completedAt: Type.Optional(Nullable(Type.String())),
   }),
 });
 

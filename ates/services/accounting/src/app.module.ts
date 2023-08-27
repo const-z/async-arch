@@ -7,6 +7,7 @@ import { AppConfigService } from './config.service';
 import { UserModule } from './user/user.module';
 import { AppController } from './app.controller';
 import { TasksModule } from './tasks/tasks.module';
+import { AccountingModule } from './accounting/accounting.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { TasksModule } from './tasks/tasks.module';
     }),
     UserModule,
     TasksModule,
+    AccountingModule,
   ],
   controllers: [AppController],
   providers: [AppConfigService],

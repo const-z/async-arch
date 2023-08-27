@@ -32,7 +32,7 @@
     },
     {
       "address": "localhost",
-      "localRoot": "${workspaceFolder}/services/tasks",
+      "localRoot": "${workspaceFolder}/services/accounting",
       "name": "Attach to ACCOUNTING",
       "port": 9231,
       "remoteRoot": "/app",

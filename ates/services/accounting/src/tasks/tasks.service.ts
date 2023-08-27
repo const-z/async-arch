@@ -36,7 +36,7 @@ export class TasksService {
       type: 'enroll',
     });
 
-    await this.accountLogRepo.upsert(entity);
+    await this.accountLogRepo.getEntityManager().persistAndFlush(entity);
   }
 
   async writeOff(data: ITask): Promise<void> {
@@ -45,13 +45,13 @@ export class TasksService {
     const user = await this.usersRepo.findOne({ publicId: data.executor });
 
     const entity: AccountLogEntity = this.accountLogRepo.create({
-      amount: data.reward,
+      amount: data.cost,
       publicId,
       task,
       user,
       type: 'writeoff',
     });
 
-    await this.accountLogRepo.upsert(entity);
+    await this.accountLogRepo.getEntityManager().persistAndFlush(entity);
   }
 }

@@ -19,10 +19,10 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
 
   const config = new DocumentBuilder()
-    .setTitle('Tasks Service')
+    .setTitle('Accounting Service')
     .setVersion('1.0')
-    .addTag('tasks')
-    .addServer('/tasks')
+    .addTag('accounting')
+    .addServer('/accounting')
     .addApiKey({ type: 'apiKey', name: 'authorization' }, 'authorization')
     .build();
 

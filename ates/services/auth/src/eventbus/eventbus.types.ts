@@ -1,8 +1,11 @@
-import { UserEventTypes } from '../user/types/events';
+export interface IEventData<T = any> {
+  eventName: string;
+  data: T;
+}
 
 export interface IEvent {
-  pattern: UserEventTypes;
-  data: unknown;
+  topic: string;
+  data: IEventData;
 }
 
 export interface IEventProducer {

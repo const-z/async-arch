@@ -1,6 +1,9 @@
-export enum UserEventTypes {
-  USER_CREATED = 'user.created',
-  USER_UPDATED = 'user.updated',
-  USER_DELETED = 'user.deleted',
-  USER_PERMISSIONS_CHANGED = 'user.permissions.changed',
+export enum UserStreamEventTopics {
+  UsersStream = 'users.stream',
+}
+
+export enum UserStreamEventTypes {
+  USER_CREATED = 'UserCreatedEvent',
+  USER_UPDATED = 'UserUpdatedEvent',
+  USER_DELETED = 'UserDeletedEvent',
 }

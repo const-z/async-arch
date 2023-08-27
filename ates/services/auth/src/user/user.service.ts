@@ -6,8 +6,21 @@ import { RolesRepo } from '../db/repository/roles.repo';
 import { IEventProducer } from '../eventbus/eventbus.types';
 import { EVENT_PRODUCER } from '../constants';
 import { getPasswordHash } from '../common/password.hash';
-import { INewUserData, IUpdateUserData, IUser } from './types/user';
-import { UserEventTypes } from './types/events';
+import {
+  IDeleteUserData,
+  INewUserData,
+  IUpdateUserData,
+  IUser,
+} from './types/user';
+import {
+  UserStreamEventFactory as UserSE,
+  UserStreamEventTypes,
+} from './events/user.s-events';
+import {
+  UserBusinessEventFactory as UserBE,
+  UserBusinessEventTypes,
+} from './events/user.b-events';
+import { UserAlreadyExistsException as UserAlreadyExistsException } from './user.exceptions';
 
 @Injectable()
 export class UserService {
@@ -24,124 +37,59 @@ export class UserService {
   }
 
   async createUser(data: INewUserData): Promise<void> {
-    const role = await this.roleRepo.findOneOrFail({ name: data.role });
-    const id = await this.userRepo.getId();
+    await this.failIfExists(data.login);
     const password = getPasswordHash(data.password, this.config.passwordSalt);
+    const newUser = await this.userRepo.createUser({ ...data, password });
 
-    const userEntity = {
-      ...data,
-      password,
-      role,
-      id,
-    };
-
-    await this.userRepo.create(userEntity);
-
-    const user = await this.userRepo.findOne({ id }, { populate: ['role'] });
-
-    await this.eventProducer.emitAndWait({
-      pattern: UserEventTypes.USER_CREATED,
-      data: user,
-    });
+    await this.eventProducer.emitAndWait(
+      UserSE.create(UserStreamEventTypes.USER_CREATED).toEvent(newUser),
+    );
   }
 
   async updateUser(data: IUpdateUserData): Promise<void> {
-    const { role, password, ...userAttrs } = data;
+    const user = await this.userRepo.getUserViewById(data.id);
 
-    const existsUser = await this.userRepo.findOneOrFail(
-      { id: data.id },
-      { populate: ['role'] },
-    );
-
-    const user = {
-      ...existsUser,
-      ...userAttrs,
-    };
-
-    if (role && role !== existsUser.role.name) {
-      user.role = await this.roleRepo.findOneOrFail({
-        name: role,
-      });
+    if (data.password) {
+      data.password = getPasswordHash(data.password, this.config.passwordSalt);
     }
 
-    if (password) {
-      user.password = getPasswordHash(data.password, this.config.passwordSalt);
+    const updatedUser = await this.userRepo.updateUser(data);
+
+    await this.eventProducer.emitAndWait(
+      UserSE.create(UserStreamEventTypes.USER_UPDATED).toEvent(updatedUser),
+    );
+
+    if (data.role && data.role !== user.role) {
+      await this.eventProducer.emitAndWait(
+        UserBE.create(UserBusinessEventTypes.USER_PERMISSIONS_CHANGED).toEvent(
+          updatedUser,
+        ),
+      );
     }
-
-    await this.userRepo.merge(user);
-
-    await Promise.all([
-      this.eventProducer.emitAndWait({
-        pattern: UserEventTypes.USER_UPDATED,
-        data: user,
-      }),
-      role && role !== existsUser.role.name
-        ? this.eventProducer.emitAndWait({
-            pattern: UserEventTypes.USER_PERMISSIONS_CHANGED,
-            data: user,
-          })
-        : null,
-    ]);
   }
 
-  async deleteUser(userId: string) {
-    const user = await this.userRepo.findOneOrFail(
-      { id: userId },
-      { populate: ['role'] },
-    );
-
-    user.deletedAt = new Date();
-
-    await this.userRepo.merge(user);
-
-    await Promise.all([
-      this.eventProducer.emitAndWait({
-        pattern: UserEventTypes.USER_DELETED,
-        data: user,
-      }),
-
-      this.eventProducer.emitAndWait({
-        pattern: UserEventTypes.USER_PERMISSIONS_CHANGED,
-        data: user,
-      }),
-    ]);
-  }
-
-  async unblockUser(userId: string): Promise<void> {
-    const user = await this.userRepo.findOneOrFail(
-      { id: userId },
-      { populate: ['role'] },
-    );
-
-    user.blockedAt = null;
-
-    await this.userRepo.merge(user);
-
-    await this.eventProducer.emitAndWait({
-      pattern: UserEventTypes.USER_PERMISSIONS_CHANGED,
-      data: user,
+  async deleteUser(userId: number) {
+    const deletedUser = await this.userRepo.deleteUser({
+      id: userId,
+      deletedAt: new Date(),
     });
-  }
 
-  async blockUser(userId: string): Promise<void> {
-    const user = await this.userRepo.findOneOrFail(
-      { id: userId },
-      { populate: ['role'] },
+    await this.eventProducer.emitAndWait(
+      UserSE.create(UserStreamEventTypes.USER_DELETED).toEvent(deletedUser),
     );
-
-    user.blockedAt = new Date();
-
-    await this.userRepo.merge(user);
-
-    await this.eventProducer.emitAndWait({
-      pattern: UserEventTypes.USER_PERMISSIONS_CHANGED,
-      data: user,
-    });
   }
 
   async getUsers(): Promise<IUser[]> {
-    const result = await this.userRepo.findAll({ populate: ['role'] });
+    const result = await this.userRepo.getUsersView();
 
     return result;
+  }
+
+  async failIfExists(login: string) {
+    const user = await this.userRepo.findOne({ login });
+
+    if (user) {
+      throw new UserAlreadyExistsException();
+    }
   }
 }

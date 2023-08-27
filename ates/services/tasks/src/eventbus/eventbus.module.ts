@@ -4,8 +4,10 @@ import { Kafka } from 'kafkajs';
 
 import { AppConfigService } from '../config.service';
 import { EVENT_PRODUCER } from '../constants';
-import { UserEventTypes } from '../user/types/events';
+import { UserStreamEventTopics } from '../user/types/events';
 import { EventProducer } from './eventbus.producer';
+import { TaskBusinessEventTopics } from 'src/tasks/events/task.b-events';
+import { TaskStreamEventTopics } from 'src/tasks/events/task.s-events';
 
 export class EventBusTransport extends ServerKafka {}
 
@@ -31,7 +33,11 @@ export class EventBusModule implements OnModuleInit {
     await admin.connect();
     const existsTopics = await admin.listTopics();
 
-    const topics = [...Object.values(UserEventTypes)]
+    const topics = [
+      ...Object.values(UserStreamEventTopics),
+      ...Object.values(TaskBusinessEventTopics),
+      ...Object.values(TaskStreamEventTopics),
+    ]
       .filter((topic) => !existsTopics.includes(topic))
       .map((topic) => ({
         topic,

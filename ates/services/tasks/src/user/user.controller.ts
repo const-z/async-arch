@@ -1,4 +1,4 @@
-import { Controller, Inject } from '@nestjs/common';
+import { Controller, Inject, Logger } from '@nestjs/common';
 import {
   Ctx,
   EventPattern,
@@ -6,56 +6,43 @@ import {
   Payload,
 } from '@nestjs/microservices';
 
-import { IEventProducer } from '../eventbus/eventbus.types';
+import { IEventData, IEventProducer } from '../eventbus/eventbus.types';
 import { EVENT_PRODUCER } from '../constants';
 import { UserService } from './user.service';
-import { UserEventTypes } from './types/events';
+import { UserStreamEventTypes, UserStreamEventTopics } from './types/events';
 import { IUser } from './types/user';
 
 @Controller()
 export class UserController {
-  constructor(
-    @Inject(EVENT_PRODUCER)
-    private readonly eventProducer: IEventProducer,
-    private readonly userService: UserService,
-  ) {}
+  constructor(private readonly userService: UserService) {}
 
-  @EventPattern(UserEventTypes.USER_CREATED)
+  @EventPattern(UserStreamEventTopics.UsersStream)
   async handleUserCreated(
-    @Payload() data: IUser,
+    @Payload() data: IEventData<IUser>,
     @Ctx() context: KafkaContext,
   ) {
-    await this.userService.upsertUser(data);
+    if (data.data && 'blockedAt' in data.data) {
+      delete data.data.blockedAt;
+    }
+
+    if (data.eventName === UserStreamEventTypes.USER_CREATED) {
+      Logger.log(`Add new user: ${JSON.stringify(data.data)}`);
+      await this.userService.upsertUser(data.data);
+    } else if (data.eventName === UserStreamEventTypes.USER_UPDATED) {
+      Logger.log(`Update user: ${JSON.stringify(data.data)}`);
+      await this.userService.upsertUser(data.data);
+    } else if (data.eventName === UserStreamEventTypes.USER_DELETED) {
+      Logger.log(`Delete user: ${JSON.stringify(data.data)}`);
+      await this.userService.upsertUser(data.data);
+    }
 
     const { offset } = context.getMessage();
     const partition = context.getPartition();
     const topic = context.getTopic();
-    await this.eventProducer.commitOffsets([{ topic, partition, offset }]);
-  }
-
-  @EventPattern(UserEventTypes.USER_UPDATED)
-  async handleUserUpdated(
-    @Payload() data: IUser,
-    @Ctx() context: KafkaContext,
-  ) {
-    await this.userService.upsertUser(data);
-
-    const { offset } = context.getMessage();
-    const partition = context.getPartition();
-    const topic = context.getTopic();
-    await this.eventProducer.commitOffsets([{ topic, partition, offset }]);
-  }
-
-  @EventPattern(UserEventTypes.USER_DELETED)
-  async handleUserDeleted(
-    @Payload() data: IUser,
-    @Ctx() context: KafkaContext,
-  ) {
-    await this.userService.upsertUser(data);
-
-    const { offset } = context.getMessage();
-    const partition = context.getPartition();
-    const topic = context.getTopic();
-    await this.eventProducer.commitOffsets([{ topic, partition, offset }]);
+    await context
+      .getConsumer()
+      .commitOffsets([
+        { topic, partition, offset: (Number(offset) + 1).toString() },
+      ]);
   }
 }

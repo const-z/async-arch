@@ -6,6 +6,7 @@ services:
     build:
       context: ./services/auth/
     entrypoint: ./run.sh
+    restart: unless-stopped
     depends_on:
       - auth_db
       - kafka

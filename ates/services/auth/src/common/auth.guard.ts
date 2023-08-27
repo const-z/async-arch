@@ -1,6 +1,7 @@
 import {
   CanActivate,
   ExecutionContext,
+  ForbiddenException,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -25,28 +26,28 @@ export function AuthGuard(allowedRoles?: string[]) {
       if (!token) {
         throw new UnauthorizedException();
       }
-      try {
-        const payload = await this.jwtService.verifyAsync(token, {
-          secret: this.config.jwtSecret,
-        });
 
-        const user = await this.userRepo.findOne(
-          { id: payload.id },
-          { populate: ['role'] },
-        );
+      const payload: { publicId: string } = await this.jwtService.verifyAsync(
+        token,
+        { secret: this.config.jwtSecret },
+      );
 
-        if (!user || user.blockedAt || user.deletedAt) {
-          throw new UnauthorizedException();
-        }
+      const user = await this.userRepo.getUserViewByPublicId(payload.publicId);
 
-        if (allowedRoles && !allowedRoles.includes(user.role.name)) {
-          throw new UnauthorizedException();
-        }
-
-        request['user'] = user;
-      } catch {
-        throw new UnauthorizedException();
+      if (!user || user.deletedAt) {
+        throw new ForbiddenException();
       }
+
+      if (
+        user.role !== 'system' &&
+        allowedRoles &&
+        !allowedRoles.includes(user.role)
+      ) {
+        throw new ForbiddenException();
+      }
+
+      request['user'] = user;
+
       return true;
     }
 

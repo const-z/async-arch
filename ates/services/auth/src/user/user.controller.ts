@@ -10,16 +10,17 @@ import {
   UseGuards,
   BadRequestException,
 } from '@nestjs/common';
-import { ApiResponse, ApiSecurity, ApiTags } from '@nestjs/swagger';
+import { ApiParam, ApiResponse, ApiSecurity, ApiTags } from '@nestjs/swagger';
 
-import { StatusDescription } from '../status.description';
-import { UserEntity } from '../db/entity/user.entity';
+import { StatusDescription } from '../common/status.description';
 import { CreateUserRequestDTO } from './dto/create.user.dto';
 import { UserService } from './user.service';
 import { UpdateUserRequestDTO } from './dto/update.user.dto';
 import { AuthGuard } from '../common/auth.guard';
 import { User } from '../common/user.decorator';
 import { IUser } from './types/user';
+import { GetUserResponseDTO } from './dto/get.user.dto';
+import { IdPathParams } from './dto/id.path-params.dto';
 
 @Controller('users')
 @ApiTags('users')
@@ -27,11 +28,13 @@ export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Get()
+  @UseGuards(AuthGuard(['admin']))
+  @ApiSecurity('authorization', ['authorization'])
   @ApiResponse({
     status: HttpStatus.OK,
     description: StatusDescription.OK,
   })
-  async getUsers(): Promise<UserEntity[]> {
+  async getUsers(): Promise<GetUserResponseDTO[]> {
     const result = await this.userService.getUsers();
 
     return result;
@@ -48,72 +51,45 @@ export class UserController {
     await this.userService.createUser(body);
   }
 
-  @Patch(':userId')
+  @Patch(':id')
   @UseGuards(AuthGuard(['admin']))
+  @ApiSecurity('authorization', ['authorization'])
+  @ApiParam({ name: 'id', type: Number })
   @ApiResponse({
     status: HttpStatus.OK,
     description: StatusDescription.OK,
   })
   async updateUser(
-    @Param('userId') userId: string,
+    @Param() params: IdPathParams,
     @User() user: IUser,
     @Body() body: UpdateUserRequestDTO,
   ): Promise<void> {
-    if (body.role && body.role !== user.role.name && user.id === userId) {
+    const userId = Number(params.id);
+    if (body.role && body.role !== user.role && user.id === userId) {
       throw new BadRequestException('Operation not permitted');
     }
 
     await this.userService.updateUser({ id: userId, ...body });
   }
 
-  @Delete(':userId')
+  @Delete(':id')
   @UseGuards(AuthGuard(['admin']))
+  @ApiSecurity('authorization', ['authorization'])
+  @ApiParam({ name: 'id', type: Number })
   @ApiResponse({
     status: HttpStatus.OK,
     description: StatusDescription.OK,
   })
   async deleteUser(
-    @Param('userId') userId: string,
+    @Param() params: IdPathParams,
     @User() user: IUser,
   ): Promise<void> {
+    const userId = Number(params.id);
+
     if (userId === user.id) {
       throw new BadRequestException('Operation not permitted');
     }
 
     await this.userService.deleteUser(userId);
-  }
-
-  @Post(':userId/block')
-  @UseGuards(AuthGuard(['admin']))
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: StatusDescription.OK,
-  })
-  async blockUser(
-    @Param('userId') userId: string,
-    @User() user: IUser,
-  ): Promise<void> {
-    if (userId === user.id) {
-      throw new BadRequestException('Operation not permitted');
-    }
-
-    await this.userService.blockUser(userId);
-  }
-
-  @Post(':userId/unblock')
-  @UseGuards(AuthGuard(['admin']))
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: StatusDescription.OK,
-  })
-  async unblockUser(
-    @Param('userId') userId: string,
-    @User() user: IUser,
-  ): Promise<void> {
-    if (userId === user.id) {
-      throw new BadRequestException('Operation not permitted');
-    }
-
-    await this.userService.unblockUser(userId);
   }
 }

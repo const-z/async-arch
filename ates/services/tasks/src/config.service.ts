@@ -51,6 +51,10 @@ export class AppConfigService extends ConfigService {
       },
       run: {
         autoCommit: false,
+        eachBatchAutoResolve: false,
+      },
+      subscribe: {
+        fromBeginning: true,
       },
     };
 

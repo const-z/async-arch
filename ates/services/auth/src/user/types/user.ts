@@ -7,27 +7,26 @@ export interface INewUserData {
 }
 
 export interface IUpdateUserData {
-  id: string;
+  id: number;
   password?: string;
   name?: string;
   email?: string;
   role?: string;
 }
 
+export interface IDeleteUserData {
+  id: number;
+  deletedAt: Date;
+}
+
 export interface IUser {
-  id: string;
+  id: number;
+  publicId: string;
   login: string;
-  password: string;
   name: string;
   email: string;
-  role: {
-    id: number;
-    name: string;
-    createdAt: Date;
-    updatedAt: Date;
-  };
+  role: string;
   createdAt: Date;
   updatedAt: Date;
-  blockedAt: Date;
   deletedAt: Date;
 }

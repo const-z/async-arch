@@ -8,8 +8,15 @@ import { RoleEntity } from './role.entity';
   customRepository: () => UsersRepo,
 })
 export class UserEntity {
-  @PrimaryKey({ type: 'uuid', defaultRaw: 'uuid_generate_v4()' })
-  id: string;
+  @PrimaryKey({ autoincrement: true })
+  id: number;
+
+  @Property({
+    fieldName: 'public_id',
+    type: 'uuid',
+    defaultRaw: 'uuid_generate_v4()',
+  })
+  publicId: string;
 
   @Property()
   login: string;
@@ -34,7 +41,4 @@ export class UserEntity {
 
   @Property({ fieldName: 'deleted_at', nullable: true })
   deletedAt: Date | null;
-
-  @Property({ fieldName: 'blocked_at', nullable: true })
-  blockedAt: Date | null;
 }

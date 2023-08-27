@@ -1,8 +1,8 @@
+import { EntityData, Loaded } from '@mikro-orm/core';
 import { EntityRepository } from '@mikro-orm/postgresql';
 
 import { TaskEntity } from '../entity/task.entity';
-import { ITask } from 'src/tasks/types/task';
-import { EntityData, Loaded } from '@mikro-orm/core';
+import { ITask } from '../../tasks/types/task';
 
 export class TasksRepo extends EntityRepository<TaskEntity> {
   async generatePublicId(): Promise<string> {

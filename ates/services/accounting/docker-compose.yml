@@ -1,0 +1,39 @@
+version: '3.7'
+
+services:
+
+  accounting:
+    build:
+      context: ./services/accounting/
+    entrypoint: ./run.sh
+    restart: unless-stopped
+    depends_on:
+      - accounting_db
+      - kafka
+    ports:
+      - 9231:9229
+    volumes:
+      - ./services/accounting:/app
+      - ./services/schema-registry:/schema-registry
+      - /app/node_modules
+    environment:
+      - KAFKAJS_NO_PARTITIONER_WARNING=1
+      - KAFKA_BROKERS
+      - JWT_SECRET
+      - ACCOUNTING_DB
+      - ACCOUNTING_DB_USER
+      - ACCOUNTING_DB_PASSWORD
+    networks:
+      - ates-network
+
+  accounting_db:
+    image: postgres:14
+    environment:
+      POSTGRES_DB: ${ACCOUNTING_DB}
+      POSTGRES_USER: ${ACCOUNTING_DB_USER}
+      POSTGRES_PASSWORD: ${ACCOUNTING_DB_PASSWORD}
+    ports:
+      - 5434:5432
+    command: postgres -c log_statement=all -c shared_preload_libraries=pg_stat_statements -c pg_stat_statements.track=all
+    networks:
+      - ates-network

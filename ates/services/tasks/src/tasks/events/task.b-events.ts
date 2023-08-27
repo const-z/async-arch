@@ -1,6 +1,5 @@
 import {
   TaskAssignedEventValidatorV1,
-  TaskCompletedEventSchemaV1,
   TaskCompletedEventValidatorV1,
 } from 'schema-registry';
 

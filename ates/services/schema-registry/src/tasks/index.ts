@@ -1,6 +1,6 @@
-export * from './TaskAssignedEvent/v1';
-export * from './TaskCompletedEvent/v1';
+export * from './TaskAssigned/v1';
+export * from './TaskCompleted/v1';
 
-export * from './TaskCreatedEvent/v1';
-export * from './TaskCreatedEvent/v2';
-export * from './TaskUpdatedEvent/v1';
+export * from './TaskCreated/v1';
+export * from './TaskCreated/v2';
+export * from './TaskUpdated/v1';

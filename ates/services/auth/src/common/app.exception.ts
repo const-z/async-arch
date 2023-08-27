@@ -8,7 +8,7 @@ export class AppException extends Error {
   constructor(errorCode: string, errorName: string, message?: string) {
     super(message);
     const config = new AppConfigService();
-    this.errorCode = errorCode;
+    this.errorCode = `${config.appName}-${errorCode}`;
     this.errorName = `${config.appName}-${errorName}`;
   }
 }

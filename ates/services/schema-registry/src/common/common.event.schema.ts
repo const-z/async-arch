@@ -6,6 +6,8 @@ export abstract class EventValidator {
 
   public validate(data: unknown) {
     const type = TypeCompiler.Compile(this.schema);
-    return type.Check(data);
+    const result = type.Check(data);
+
+    return result;
   }
 }

@@ -1,7 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
 
-
-
 import { UsersRepo } from '../db/repository/users.repo';
 import { TasksRepo } from '../db/repository/tasks.repo';
 import { IEventProducer } from '../eventbus/eventbus.types';
@@ -17,7 +15,6 @@ import {
   TaskBusinessEventFactory as TaskBE,
   TaskBusinessEventTypes,
 } from './events/task.b-events';
-
 
 @Injectable()
 export class TasksService {
@@ -81,16 +78,31 @@ export class TasksService {
   }
 
   async shuffle() {
-    // if (reassigned) {
-    //   await this.eventProducer.emitAndWait(
-    //     TaskSE.create(TaskStreamEventTypes.TASK_UPDATED).toEvent(updatedTask),
-    //   );
-    //   await this.eventProducer.emitAndWait(
-    //     TaskBE.create(TaskBusinessEventTypes.TASK_ASSIGNED).toEvent(
-    //       updatedTask,
-    //     ),
-    //   );
-    // }
+    const tasks = await this.tasksRepo.find(
+      { completedAt: { $eq: null } },
+      { populate: ['executor'] },
+    );
+
+    for (const task of tasks) {
+      const executor = await this.getRandomExecutor();
+
+      if (executor.id === task.executor.id) {
+        continue;
+      }
+
+      this.tasksRepo.assign(task, { executor });
+      const updatedTask = await this.tasksRepo.updateTask(task);
+
+      await this.eventProducer.emitAndWait(
+        TaskSE.create(TaskStreamEventTypes.TASK_UPDATED).toEvent(updatedTask),
+      );
+
+      await this.eventProducer.emitAndWait(
+        TaskBE.create(TaskBusinessEventTypes.TASK_ASSIGNED).toEvent(
+          updatedTask,
+        ),
+      );
+    }
   }
 
   async getRandomExecutor(): Promise<UserEntity> {

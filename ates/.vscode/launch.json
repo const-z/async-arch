@@ -29,6 +29,19 @@
       ],
       "type": "node",
       "restart": true
+    },
+    {
+      "address": "localhost",
+      "localRoot": "${workspaceFolder}/services/accounting",
+      "name": "Attach to ACCOUNTING",
+      "port": 9231,
+      "remoteRoot": "/app",
+      "request": "attach",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "type": "node",
+      "restart": true
     }
   ]
 }

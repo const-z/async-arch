@@ -1,3 +1,3 @@
-# AUTH Service
+# Tasks Service
 
-http://localhost/auth/swagger
+http://localhost/tasks/swagger

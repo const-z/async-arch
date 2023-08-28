@@ -1,2 +1,2 @@
-export * from './tasks/TaskCreatedEvent/v1';
-export * from './tasks/TaskCreatedEvent/v2';
+export * from './tasks';
+export * from './auth';

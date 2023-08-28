@@ -1,7 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
 
-import { TaskCreatedSchemaV1 } from 'schema-registry';
-
 import { UsersRepo } from '../db/repository/users.repo';
 import { TasksRepo } from '../db/repository/tasks.repo';
 import { IEventProducer } from '../eventbus/eventbus.types';
@@ -17,7 +15,6 @@ import {
   TaskBusinessEventFactory as TaskBE,
   TaskBusinessEventTypes,
 } from './events/task.b-events';
-import { EventDataValidationException } from './tasks.exceptions';
 
 @Injectable()
 export class TasksService {
@@ -52,19 +49,9 @@ export class TasksService {
 
     const createdTask = await this.tasksRepo.createTask(task);
 
-    const taskCreatedEventData = TaskSE.create(
-      TaskStreamEventTypes.TASK_CREATED,
-    ).toEvent(createdTask);
-
-    const vresult = new TaskCreatedSchemaV1().validate(
-      taskCreatedEventData.data,
+    await this.eventProducer.emitAndWait(
+      TaskSE.create(TaskStreamEventTypes.TASK_CREATED).toEvent(createdTask),
     );
-
-    if (!vresult) {
-      throw new EventDataValidationException();
-    }
-
-    await this.eventProducer.emitAndWait(taskCreatedEventData);
 
     await this.eventProducer.emitAndWait(
       TaskBE.create(TaskBusinessEventTypes.TASK_ASSIGNED).toEvent(createdTask),
@@ -91,16 +78,31 @@ export class TasksService {
   }
 
   async shuffle() {
-    // if (reassigned) {
-    //   await this.eventProducer.emitAndWait(
-    //     TaskSE.create(TaskStreamEventTypes.TASK_UPDATED).toEvent(updatedTask),
-    //   );
-    //   await this.eventProducer.emitAndWait(
-    //     TaskBE.create(TaskBusinessEventTypes.TASK_ASSIGNED).toEvent(
-    //       updatedTask,
-    //     ),
-    //   );
-    // }
+    const tasks = await this.tasksRepo.find(
+      { completedAt: { $eq: null } },
+      { populate: ['executor'] },
+    );
+
+    for (const task of tasks) {
+      const executor = await this.getRandomExecutor();
+
+      if (executor.id === task.executor.id) {
+        continue;
+      }
+
+      this.tasksRepo.assign(task, { executor });
+      const updatedTask = await this.tasksRepo.updateTask(task);
+
+      await this.eventProducer.emitAndWait(
+        TaskSE.create(TaskStreamEventTypes.TASK_UPDATED).toEvent(updatedTask),
+      );
+
+      await this.eventProducer.emitAndWait(
+        TaskBE.create(TaskBusinessEventTypes.TASK_ASSIGNED).toEvent(
+          updatedTask,
+        ),
+      );
+    }
   }
 
   async getRandomExecutor(): Promise<UserEntity> {

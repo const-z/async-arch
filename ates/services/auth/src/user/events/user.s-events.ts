@@ -1,5 +1,16 @@
+import {
+  UserCreatedEventValidatorV1,
+  UserDeletedEventValidatorV1,
+  UserUpdatedEventValidatorV1,
+} from 'schema-registry';
+
 import { IEvent } from '../../eventbus/eventbus.types';
 import { IUser } from '../types/user';
+import { EventDataValidationException } from '../user.exceptions';
+
+interface EventDataValidator {
+  validate(data: unknown): boolean;
+}
 
 export interface IUserStreamEventData {
   publicId: string;
@@ -25,7 +36,10 @@ export enum UserStreamEventTopics {
 }
 
 abstract class CommonUserStreamEvent {
-  constructor(private readonly eventName: string) {}
+  constructor(
+    private readonly eventName: string,
+    private readonly validator: EventDataValidator,
+  ) {}
 
   private convertData(data: IUser): IUserStreamEventData {
     const eventData: IUserStreamEventData = {
@@ -43,12 +57,20 @@ abstract class CommonUserStreamEvent {
   }
 
   toEvent(data: IUser): IEvent {
+    const eventData = {
+      eventName: this.eventName,
+      data: this.convertData(data),
+    };
+
+    const isValid = this.validator.validate(eventData);
+
+    if (!isValid) {
+      throw new EventDataValidationException();
+    }
+
     return {
       topic: UserStreamEventTopics.UsersStream,
-      data: {
-        eventName: this.eventName,
-        data: this.convertData(data),
-      },
+      data: eventData,
     };
   }
 }
@@ -69,19 +91,19 @@ export class UserStreamEventFactory {
 
 class UserCreatedEvent extends CommonUserStreamEvent {
   constructor() {
-    super(UserCreatedEvent.name);
+    super(UserCreatedEvent.name, new UserCreatedEventValidatorV1());
   }
 }
 
 class UserUpdatedEvent extends CommonUserStreamEvent {
   constructor() {
-    super(UserUpdatedEvent.name);
+    super(UserUpdatedEvent.name, new UserUpdatedEventValidatorV1());
   }
 }
 
 class UserDeletedEvent extends CommonUserStreamEvent {
   constructor() {
-    super(UserDeletedEvent.name);
+    super(UserDeletedEvent.name, new UserDeletedEventValidatorV1());
   }
 
   toEvent(data: IUser): IEvent {

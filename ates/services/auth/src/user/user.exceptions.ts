@@ -5,3 +5,9 @@ export class UserAlreadyExistsException extends AppException {
     super('1001', UserAlreadyExistsException.name);
   }
 }
+
+export class EventDataValidationException extends AppException {
+  constructor() {
+    super('3001', EventDataValidationException.name);
+  }
+}

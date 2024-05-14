@@ -1,5 +1,11 @@
+import { UserPermissionsChangedEventValidatorV1 } from 'schema-registry';
 import { IEvent } from '../../eventbus/eventbus.types';
 import { IUser } from '../types/user';
+import { EventDataValidationException } from '../user.exceptions';
+
+interface EventDataValidator {
+  validate(data: unknown): boolean;
+}
 
 export interface IUserBusinessEventData {
   publicId: string;
@@ -23,7 +29,10 @@ export enum UserBusinessEventTopics {
 }
 
 abstract class CommonUserBusinessEvent {
-  constructor(private readonly eventName: string) {}
+  constructor(
+    private readonly eventName: string,
+    private readonly validator: EventDataValidator,
+  ) {}
 
   private convertData(data: IUser): IUserBusinessEventData {
     const eventData: IUserBusinessEventData = {
@@ -41,12 +50,20 @@ abstract class CommonUserBusinessEvent {
   }
 
   toEvent(data: IUser): IEvent {
+    const eventData = {
+      eventName: this.eventName,
+      data: this.convertData(data),
+    };
+
+    const isValid = this.validator.validate(eventData);
+
+    if (!isValid) {
+      throw new EventDataValidationException();
+    }
+
     return {
       topic: UserBusinessEventTopics.Users,
-      data: {
-        eventName: this.eventName,
-        data: this.convertData(data),
-      },
+      data: eventData,
     };
   }
 }
@@ -61,6 +78,9 @@ export class UserBusinessEventFactory {
 
 export class UserPermissionsChangedEvent extends CommonUserBusinessEvent {
   constructor() {
-    super(UserPermissionsChangedEvent.name);
+    super(
+      UserPermissionsChangedEvent.name,
+      new UserPermissionsChangedEventValidatorV1(),
+    );
   }
 }
